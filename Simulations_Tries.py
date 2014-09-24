@@ -16,8 +16,12 @@ Created on Thu Sep 18 14:36:55 2014
 from scipy.io import loadmat
 from Make3dgabor import make3dgabor
 from sklearn.cross_validation import train_test_split
-from sklearn.linear_model import ElasticNetCV
+from sklearn.linear_model import ElasticNetCV,ElasticNet
 from sklearn import preprocessing
+from sklearn import grid_search
+from sklearn.neighbors import KNeighborsRegressor,KernelDensity
+from scipy.interpolate import UnivariateSpline
+from sklearn.cross_validation import KFold
 #%%
 #create gabor RF
 
@@ -38,7 +42,9 @@ RF = np.squeeze(gabortup[0])
 
 #%%
 
-stim = loadmat("/home/mboos/Work/Practical Project/Simulations/stim_matrix.mat")
+srv_path = "/home/mboos/Simulations/stim_matrix.mat"
+
+stim = loadmat(srv_path)
 fname_list = stim["fnamelist"]
 stim = np.squeeze(stim["stim"])
 
@@ -117,5 +123,31 @@ train_X,test_X,train_Y,test_Y = train_test_split(lagged_stimuli,Y,test_size=0.3)
 
 #%%
 #try elastic net CV
-enet_model = ElasticNetCV([.1,.3,.7,.9,.99],cv=3,n_jobs=-1)
+#enet_model = ElasticNetCV([.1,.3,.7,.9,.99],cv=3,n_jobs=-1)
+#enet_model.train(train_X,train_Y)
+#pred_Y = enet_model.predict(train_X)
+
+#for now
+enet = ElasticNet(l1_ratio=0.7)
+enet.fit(train_X,train_Y)
+pred_Y = enet.predict(train_X)
+
+#%%
+#non-linearity first by CV NN
+
+#much too slow
+parameters_NN = { 'weights' : ('uniform','distance') , 'n_neighbors' : [5,10,20,40]}
+NN_nonl = KNeighborsRegressor(n_neighbors=10)
+gs_NN = grid_search.RandomizedSearchCV(NN_nonl,parameters_NN,verbose=1)
+
+#try kernel estimation
+#parameters_kernel = { 'bandwidth' : [1.0,3.0,5.0,10.0]}
+#kde = KernelDensity()
+#kde_cv = grid_search.RandomizedSearchCV(kde,parameters_kernel,n_jobs=-1)
+
+#%%
+
+order = np.argsort(pred_Y)
+spl = UnivariateSpline(pred_Y[order],train_Y[order],s=pred_Y.size)
+#KFold(5)
 
