@@ -147,7 +147,10 @@ gs_NN = grid_search.RandomizedSearchCV(NN_nonl,parameters_NN,verbose=1)
 
 #%%
 
-order = np.argsort(pred_Y)
-spl = UnivariateSpline(pred_Y[order],train_Y[order],s=pred_Y.size)
+#does not work well - need CV probably
+#order = np.argsort(pred_Y)
+#spl = UnivariateSpline(pred_Y[order],train_Y[order],s=pred_Y.size)
 #KFold(5)
+
+#%%
 
